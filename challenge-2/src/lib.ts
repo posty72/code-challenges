@@ -8,13 +8,37 @@ const MINUTES_IN_HOUR = 60 as const;
 const HOUR_UNIT = "h" as const;
 const MINUTE_UNIT = "min" as const;
 
-interface Time {
-  hours: number;
-  minutes: number;
-}
+const toMinutes = (milliseconds: number) =>
+  roundDownToNearestIncrement(
+    milliseconds / MILLISECONDS_IN_SECOND / SECONDS_IN_MINUTE
+  ) % SECONDS_IN_MINUTE;
+const toHours = (milliseconds: number) =>
+  roundDownToNearestOne(
+    (milliseconds /
+      MILLISECONDS_IN_SECOND /
+      SECONDS_IN_MINUTE /
+      MINUTES_IN_HOUR) %
+      MINUTES_IN_HOUR
+  );
 
-const roundDownToNearestIncrement = (minutes: number) =>
-  Math.floor(minutes / ESTIMATE_INCREMENTS) * ESTIMATE_INCREMENTS;
+const roundDownTo = (increment: number) => (value: number) =>
+  Math.floor(value / increment) * increment;
+
+const roundDownToNearestIncrement = roundDownTo(ESTIMATE_INCREMENTS);
+const roundDownToNearestOne = roundDownTo(1);
+
+const stripZeroValues = (time: string) =>
+  time.replace(` 0${MINUTE_UNIT}`, "").replace(`0${HOUR_UNIT} `, "");
+
+const stripUnits = (
+  from: string,
+  to: string,
+  unitToCheck: string,
+  unitToStrip: string
+) =>
+  !to.includes(unitToCheck) && !from.includes(unitToCheck)
+    ? from.replace(unitToStrip, "")
+    : from;
 
 export function formatEstimatedWaitTime(
   current: string,
@@ -25,11 +49,6 @@ export function formatEstimatedWaitTime(
   const upper = new Date(upperBoundEstimate).valueOf();
   const lower = new Date(lowerBoundEstimate).valueOf();
 
-  // Assume parameters passed in have been determined correctly
-  if (upper < lower) {
-    throw new Error("Upper bound is lower than expected lower bound");
-  }
-
   const upperDifference = upper - currentTime;
   const lowerDifference = lower - currentTime;
 
@@ -37,70 +56,27 @@ export function formatEstimatedWaitTime(
     return "as soon as possible";
   }
 
-  const to = parseSecondsAsTime(upperDifference);
-  const from = parseSecondsAsTime(lowerDifference);
-  const toWithUnits = formatTimeWithUnits(to);
+  const lowHours = Math.min(toHours(lowerDifference), MAX_HOURS_TO_SHOW);
+  const upperHours = Math.min(toHours(upperDifference), MAX_HOURS_TO_SHOW);
+  const lowMinutes = toMinutes(lowerDifference);
+  const upperMinutes = toMinutes(upperDifference);
 
-  if (lowerDifference <= 0) {
-    return toWithUnits;
-  }
-
-  // to & from are the same
-  if (from.hours === to.hours && from.minutes === to.minutes) {
-    return toWithUnits;
-  }
-
-  const showMinuteInFrom = to.hours !== from.hours;
-  const showHourInFrom = to.minutes !== from.minutes;
-  const fromWithUnits = formatTimeWithUnits(
-    from,
-    showHourInFrom,
-    showMinuteInFrom
+  const to =
+    upperHours === MAX_HOURS_TO_SHOW
+      ? `${upperHours}${HOUR_UNIT}`
+      : stripZeroValues(
+          `${upperHours}${HOUR_UNIT} ${upperMinutes}${MINUTE_UNIT}`
+        );
+  let from = stripZeroValues(
+    `${lowHours}${HOUR_UNIT} ${lowMinutes}${MINUTE_UNIT}`
   );
 
-  return `${fromWithUnits} - ${toWithUnits}`;
-}
-
-function formatTimeWithUnits(
-  { hours, minutes }: Time,
-  showHour = true,
-  showMinute = true
-) {
-  const hourUnit = showHour ? HOUR_UNIT : "";
-  const minuteUnit = showMinute ? MINUTE_UNIT : "";
-
-  const formattedHour = hours + hourUnit;
-  const formattedMinute = minutes + minuteUnit;
-
-  if (hours <= 0) {
-    return formattedMinute;
+  if (lowerDifference <= 0 || from === to) {
+    return to;
   }
 
-  if (minutes > 0 && minutes < MINUTES_IN_HOUR) {
-    return `${formattedHour} ${formattedMinute}`;
-  }
+  from = stripUnits(from, to, HOUR_UNIT, MINUTE_UNIT);
+  from = stripUnits(from, to, MINUTE_UNIT, HOUR_UNIT);
 
-  return formattedHour;
-}
-
-function parseSecondsAsTime(milliseconds: number): Time {
-  const totalMinutes = roundDownToNearestIncrement(
-    milliseconds / MILLISECONDS_IN_SECOND / SECONDS_IN_MINUTE
-  );
-  const totalHours = Math.floor(totalMinutes / MINUTES_IN_HOUR);
-
-  const hours = Math.min(totalHours, MAX_HOURS_TO_SHOW);
-  const minutes = totalMinutes - hours * MINUTES_IN_HOUR;
-
-  if (hours <= 0) {
-    return { minutes, hours: 0 };
-  }
-
-  const result = { hours, minutes: 0 };
-
-  if (minutes < MINUTES_IN_HOUR) {
-    result.minutes = minutes;
-  }
-
-  return result;
+  return `${from} - ${to}`;
 }
