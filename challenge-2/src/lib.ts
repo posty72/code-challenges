@@ -49,6 +49,15 @@ export function formatEstimatedWaitTime(
   const upper = new Date(upperBoundEstimate).valueOf();
   const lower = new Date(lowerBoundEstimate).valueOf();
 
+  if (!upper || !lower || !currentTime) {
+    throw new Error("Please make sure inputs are valid dates");
+  }
+
+  // Assume parameters passed in have been determined correctly
+  if (upper < lower) {
+    throw new Error("Upper bound is lower than expected lower bound");
+  }
+
   const upperDifference = upper - currentTime;
   const lowerDifference = lower - currentTime;
 
