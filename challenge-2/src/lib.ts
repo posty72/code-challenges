@@ -9,11 +9,11 @@ const HOUR_UNIT = "h" as const;
 const MINUTE_UNIT = "min" as const;
 
 const toMinutes = (milliseconds: number) =>
-  roundDownToNearestIncrement(
+  roundDownToIncrement(
     milliseconds / MILLISECONDS_IN_SECOND / SECONDS_IN_MINUTE
   ) % SECONDS_IN_MINUTE;
 const toHours = (milliseconds: number) =>
-  roundDownToNearestOne(
+  roundDownToWhole(
     (milliseconds /
       MILLISECONDS_IN_SECOND /
       SECONDS_IN_MINUTE /
@@ -24,8 +24,8 @@ const toHours = (milliseconds: number) =>
 const roundDownTo = (increment: number) => (value: number) =>
   Math.floor(value / increment) * increment;
 
-const roundDownToNearestIncrement = roundDownTo(ESTIMATE_INCREMENTS);
-const roundDownToNearestOne = roundDownTo(1);
+const roundDownToIncrement = roundDownTo(ESTIMATE_INCREMENTS);
+const roundDownToWhole = roundDownTo(1);
 
 const stripZeroValues = (time: string) =>
   time.replace(` 0${MINUTE_UNIT}`, "").replace(`0${HOUR_UNIT} `, "");
@@ -70,12 +70,14 @@ export function formatEstimatedWaitTime(
   const lowMinutes = toMinutes(lowerDifference);
   const upperMinutes = toMinutes(upperDifference);
 
-  const to =
-    upperHours === MAX_HOURS_TO_SHOW
-      ? `${upperHours}${HOUR_UNIT}`
-      : stripZeroValues(
-          `${upperHours}${HOUR_UNIT} ${upperMinutes}${MINUTE_UNIT}`
-        );
+  let to = stripZeroValues(
+    `${upperHours}${HOUR_UNIT} ${upperMinutes}${MINUTE_UNIT}`
+  );
+
+  if (upperHours === MAX_HOURS_TO_SHOW) {
+    to = `${upperHours}${HOUR_UNIT}`;
+  }
+
   let from = stripZeroValues(
     `${lowHours}${HOUR_UNIT} ${lowMinutes}${MINUTE_UNIT}`
   );
