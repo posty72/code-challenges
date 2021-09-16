@@ -1,30 +1,21 @@
 export function sumOfNumbersClosestToZero(numbers: number[]) {
-  let closestToZero: number | null = null;
+  let closestToZero: number = numbers[0] + numbers[1];
 
-  for (let indexA = 0; indexA < numbers.length; indexA++) {
-    for (let indexB = 0; indexB < numbers.length; indexB++) {
-      if (indexB === indexA) {
-        continue;
-      }
-
-      const sum = numbers[indexA] + numbers[indexB];
+  for (let a = 0; a < numbers.length; a++) {
+    for (let b = a + 1; b < numbers.length; b++) {
+      const sum = numbers[a] + numbers[b];
 
       if (sum === 0) {
         return 0;
       }
 
       if (
-        closestToZero === null ||
         (sum > 0 && sum < closestToZero) ||
         (sum < 0 && sum > closestToZero)
       ) {
         closestToZero = sum;
       }
     }
-  }
-
-  if (closestToZero === null) {
-    throw new Error("Something went wrong! Did you pass an empty array?");
   }
 
   return closestToZero;

@@ -47,14 +47,4 @@ describe("Extra tests", () => {
     // Assert
     expect(result).toBe(0);
   });
-
-  it("throws an error for an empty array", () => {
-    // Arrange
-    const input: number[] = [];
-
-    // Assert
-    expect(() => {
-      sumOfNumbersClosestToZero(input);
-    }).toThrow();
-  });
 });
