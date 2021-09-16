@@ -1,13 +1,9 @@
 import { formatEstimatedWaitTime } from "./lib";
 
-main();
-
-function main() {
-  runExample1();
-  runExample2();
-  runExample3();
-  runExample4();
-}
+runExample1();
+runExample2();
+runExample3();
+runExample4();
 
 function runExample1() {
   const time = "2021-01-10T01:30:00.000Z";

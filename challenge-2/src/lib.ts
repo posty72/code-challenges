@@ -8,6 +8,12 @@ const MINUTES_IN_HOUR = 60 as const;
 const HOUR_UNIT = "h" as const;
 const MINUTE_UNIT = "min" as const;
 
+const roundDownTo = (increment: number) => (value: number) =>
+  Math.floor(value / increment) * increment;
+
+const roundDownToIncrement = roundDownTo(ESTIMATE_INCREMENTS);
+const roundDownToWhole = roundDownTo(1);
+
 const toMinutes = (milliseconds: number) =>
   roundDownToIncrement(
     milliseconds / MILLISECONDS_IN_SECOND / SECONDS_IN_MINUTE
@@ -20,12 +26,6 @@ const toHours = (milliseconds: number) =>
       MINUTES_IN_HOUR) %
       MINUTES_IN_HOUR
   );
-
-const roundDownTo = (increment: number) => (value: number) =>
-  Math.floor(value / increment) * increment;
-
-const roundDownToIncrement = roundDownTo(ESTIMATE_INCREMENTS);
-const roundDownToWhole = roundDownTo(1);
 
 const stripZeroValues = (time: string) =>
   time.replace(` 0${MINUTE_UNIT}`, "").replace(`0${HOUR_UNIT} `, "");
